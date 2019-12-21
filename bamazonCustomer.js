@@ -19,27 +19,18 @@ connection.connect(function(err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId);
   bamazon();
-  // afterConnection();
 });
 
-// function afterConnection() {
-//   connection.query("SELECT * FROM products", function(err, res) {
-//     if (err) throw err;
-//     console.log(res);
-//     connection.end();
-//   });
-// }
-
 function bamazon() {
-  // query the database for all items being auctioned
+  // query the database for all products
   connection.query("SELECT * FROM products", function(err, results) {
     if (err) throw err;
-    // once you have the items, prompt the user for which they'd like to bid on
+    // once you have the items, prompt the user for which they'd like to buy
     inquirer
       .prompt([
         {
           name: "choice",
-          type: "rawlist",
+          type: "input",
           choices: function() {
             var choiceArray = [];
             for (var i = 0; i < results.length; i++) {
@@ -47,49 +38,43 @@ function bamazon() {
             }
             return choiceArray;
           },
-          message: "What is the id # of the product you would like to buy?"
+          message: "What is the id # of the product you would like to buy? (1-10)"
+        },
+        {
+          name: "quantity",
+          type: "input",
+          message: "How much of this product would you like to buy?"
         }
-        // {
-        //   name: "bid",
-        //   type: "input",
-        //   message: "How much would you like to bid?"
-        // }
       ])
       .then(function(answer) {
         // get the information of the chosen item
-        var chosenItem;
-        for (var i = 0; i < results.length; i++) {
-          if (results[i].id === answer.choice) {
-            chosenItem = results[i];
-          }
-        }
+        var answerMod = (answer.choice - 1);
+        var chosenItem = results[answerMod];
+        console.log(chosenItem);
       
         // determine if bid was high enough
-        if (chosenItem.highest_bid < parseInt(answer.bid)) {
-          // bid was high enough, so update db, let the user know, and start over
-          connection.query(
-            "UPDATE auctions SET ? WHERE ?",
-            [
-              {
-                highest_bid: answer.bid
-              },
-              {
-                id: chosenItem.id
-              }
-            ],
-            function(error) {
-              if (error) throw err;
-              console.log("Bid placed successfully!");
-              start();
+        if (chosenItem.stock_quantity - parseInt(answer.quantity) >= 0) {
+        // bid was high enough, so update db, let the user know, and start over
+        connection.query(
+          "UPDATE products SET ? WHERE ?",
+          [
+            {
+              stock_quantity: (chosenItem.stock_quantity - parseInt(answer.quantity))
+            },
+            {
+              id: chosenItem.id
             }
-          );
+          ]);
+          var totalCost = chosenItem.price * parseInt(answer.quantity);
+          console.log("The total cost of your purchase comes out to: " + totalCost)
+          bamazon();
         }
         else {
           // bid wasn't high enough, so apologize and start over
-          console.log("Your bid was too low. Try again...");
-          start();
+          console.log("INSUFFICIENT QUANTITY! TOO BAD!");
+          // connection.end();
+          bamazon();
         }
-      });
+    });
   });
 }
-
