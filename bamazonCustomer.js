@@ -36,7 +36,7 @@ function bamazon() {
             for (var i = 0; i < results.length; i++) {
               choiceArray.push(results[i].id);
             }
-            return choiceArray;
+            console.log(results);
           },
           message: "What is the id # of the product you would like to buy? (1-10)"
         },
@@ -50,7 +50,6 @@ function bamazon() {
         // get the information of the chosen item
         var answerMod = (answer.choice - 1);
         var chosenItem = results[answerMod];
-        console.log(chosenItem);
       
         // determine if bid was high enough
         if (chosenItem.stock_quantity - parseInt(answer.quantity) >= 0) {
